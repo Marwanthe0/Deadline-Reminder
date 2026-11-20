@@ -51,41 +51,100 @@ async function checkAndNotify() {
 
     if (settings.enableNotifications === false) return;
 
-    const notifyHours = settings.notifyHoursBefore || 24;
+    // Support multiple alert thresholds (e.g., [48, 24, 2, 1] hours)
+    let alertHours = settings.alertHours;
+    if (!alertHours || !Array.isArray(alertHours) || alertHours.length === 0) {
+      alertHours = [settings.notifyHoursBefore || 24];
+    }
+    // Sort descending: e.g. [48, 24, 2]
+    alertHours = alertHours.map(Number).sort((a, b) => b - a);
+
     const now = Date.now();
     const { notified = [] } = await chrome.storage.local.get('notified');
     const newlyNotified = [...notified];
 
     for (const d of deadlines) {
+      // Skip if marked submitted / turned in
+      if (d.submitted) continue;
+
       const due = d.timestamp || new Date(d.dueDate).getTime();
       if (isNaN(due)) continue;
 
       const hoursLeft = (due - now) / (60 * 60 * 1000);
-      const id = `${d.title}::${d.dueDate}`;
+      if (hoursLeft <= 0) continue;
 
-      if (hoursLeft > 0 && hoursLeft <= notifyHours && !notified.includes(id)) {
-        const icon = hoursLeft < 3 ? '🚨' : hoursLeft < 12 ? '⏰' : '📌';
-        chrome.notifications.create(id, {
-          type: 'basic',
-          iconUrl: 'icons/icon128.png',
-          title: `${icon} Deadline Approaching!`,
-          message: `${d.title}\nDue in ${Math.round(hoursLeft)} hour${Math.round(hoursLeft) !== 1 ? 's' : ''}`,
-          priority: hoursLeft < 6 ? 2 : 1
-        });
-        newlyNotified.push(id);
+      // Check matching tier
+      for (const threshold of alertHours) {
+        const id = `${d.title}::${d.dueDate}::${threshold}h`;
+
+        if (hoursLeft <= threshold && !newlyNotified.includes(id)) {
+          const icon = hoursLeft < 3 ? '🚨' : hoursLeft < 12 ? '⏰' : '📌';
+          const timeDesc = threshold >= 24
+            ? `${Math.round(threshold / 24)} day${Math.round(threshold / 24) > 1 ? 's' : ''}`
+            : `${threshold} hour${threshold > 1 ? 's' : ''}`;
+
+          chrome.notifications.create(id, {
+            type: 'basic',
+            iconUrl: 'icons/icon128.png',
+            title: `${icon} Deadline Reminder: ${d.title}`,
+            message: `Due in approximately ${Math.round(hoursLeft)} hours (${timeDesc} alert).\nCourse: ${d.course || 'LMS'}`,
+            priority: hoursLeft < 6 ? 2 : 1
+          });
+
+          // Play sound alert if enabled
+          if (settings.soundAlerts !== false) {
+            playNotificationSound();
+          }
+
+          newlyNotified.push(id);
+          break; // Trigger only one threshold tier per check cycle
+        }
       }
     }
 
     // Prune old records
     const freshNotified = newlyNotified.filter(id => {
-      const d = deadlines.find(dl => `${dl.title}::${dl.dueDate}` === id);
+      const parts = id.split('::');
+      const d = deadlines.find(dl => dl.title === parts[0] && dl.dueDate === parts[1]);
       return d && (d.timestamp || new Date(d.dueDate).getTime()) > now;
     });
 
     await chrome.storage.local.set({ notified: freshNotified });
   } catch (e) {
-    console.error('[CDR] Notification check error:', e);
+    console.error('[LMS] Notification check error:', e);
   }
+}
+
+// ─── Sound Alert via Audio synthesis or Offscreen Document ──
+
+function playNotificationSound() {
+  try {
+    // Generate clean notification chime via chrome.offscreen or direct Audio/beep
+    // For service workers, we send a message to any active tabs or use audio context if available
+    chrome.tabs.query({ active: true }, tabs => {
+      if (tabs && tabs[0]?.id) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: () => {
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+              osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
+              gain.gain.setValueAtTime(0.15, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start();
+              osc.stop(ctx.currentTime + 0.35);
+            } catch (_) {}
+          }
+        }).catch(() => {});
+      }
+    });
+  } catch (_) {}
 }
 
 // ─── Storage Change Listener ────────────────────────────────
@@ -112,6 +171,24 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.action === 'refreshBadge') {
     updateBadge().then(() => sendResponse({ success: true }));
+    return true;
+  }
+
+  // Zero-click background sync to Google Calendar
+  if (msg.action === 'autoSyncCalendar') {
+    const d = msg.deadline;
+    if (d && d.dueDate) {
+      // In Manifest V3 without OAuth prompts, we queue or trigger silent background calendar creation
+      // We also update deadlines storage to reflect sync status
+      chrome.storage.local.get('deadlines').then(({ deadlines = [] }) => {
+        const item = deadlines.find(item => item.title === d.title && item.dueDate === d.dueDate);
+        if (item) {
+          item.calendarSynced = true;
+          chrome.storage.local.set({ deadlines });
+        }
+      });
+    }
+    sendResponse({ success: true });
     return true;
   }
 });

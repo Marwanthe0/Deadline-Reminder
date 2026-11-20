@@ -65,7 +65,7 @@
         const deadlines = [];
         const course = this.getCourse();
 
-        // 1) Assignment index  (/courses/X/assignments)
+        // 1) Assignment index (/courses/X/assignments)
         document
           .querySelectorAll('.assignment, .ig-row, .assignment_group .ig-list .ig-row')
           .forEach(row => {
@@ -75,12 +75,17 @@
             const dateEl = row.querySelector(
               '.assignment-date-due .screenreader-only, .due-date, .date-due, .assignment-date-due'
             );
+            const isSubmitted = !!(
+              row.querySelector('.submission_status, .submitted, .ig-status, .check') ||
+              row.textContent.match(/\b(submitted|turned in|graded)\b/i)
+            );
             if (titleEl) {
               deadlines.push({
                 title: titleEl.textContent.trim(),
                 dueDate: cleanDateText(dateEl),
                 link: titleEl.href,
                 course,
+                submitted: isSubmitted,
                 platform: 'Canvas'
               });
             }
@@ -101,6 +106,10 @@
             const courseEl = item.querySelector(
               '[class*="Course"], [class*="course"]'
             );
+            const isSubmitted = !!(
+              item.querySelector('[class*="Completed"], [class*="complete"], [class*="submitted"]') ||
+              item.textContent.match(/\b(submitted|completed|turned in|graded)\b/i)
+            );
             if (titleEl) {
               deadlines.push({
                 title: titleEl.textContent.trim(),
@@ -110,6 +119,7 @@
                   '',
                 link: titleEl.href || window.location.href,
                 course: courseEl?.textContent.trim() || course,
+                submitted: isSubmitted,
                 platform: 'Canvas'
               });
             }
@@ -121,12 +131,14 @@
           .forEach(row => {
             const dateEl = row.querySelector('.day_date, .date');
             const titleEl = row.querySelector('.name a, .title a, a');
+            const isSubmitted = !!row.textContent.match(/\b(submitted|completed|graded)\b/i);
             if (dateEl && titleEl) {
               deadlines.push({
                 title: titleEl.textContent.trim(),
                 dueDate: dateEl.textContent.trim(),
                 link: titleEl.href || '',
                 course,
+                submitted: isSubmitted,
                 platform: 'Canvas'
               });
             }
@@ -138,6 +150,10 @@
           .forEach(item => {
             const titleEl = item.querySelector('.ig-title, .fc-title, a');
             const dateEl = item.querySelector('.agenda-date, time, [datetime]');
+            const isSubmitted = !!(
+              item.classList.contains('completed') ||
+              item.querySelector('.completed')
+            );
             if (titleEl) {
               deadlines.push({
                 title: titleEl.textContent.trim(),
@@ -147,6 +163,7 @@
                   '',
                 link: titleEl.href || item.querySelector('a')?.href || '',
                 course,
+                submitted: isSubmitted,
                 platform: 'Canvas'
               });
             }
@@ -292,6 +309,9 @@
         const deadlines = [];
         const course = this.getCourse();
 
+        // Check if current tab is "Done" or "Turned in"
+        const isDonePage = window.location.href.includes('/turned-in') || window.location.href.includes('/done');
+
         // 1) Work / assignment cards & coursework items
         document
           .querySelectorAll(
@@ -305,6 +325,12 @@
             const courseEl = item.querySelector(
               '[class*="course"], [class*="class"], .j10vNd'
             );
+            const itemText = item.textContent || '';
+            const isSubmitted = isDonePage || !!(
+              itemText.match(/\b(turned in|submitted|done late|graded)\b/i) ||
+              item.querySelector('[aria-label*="Turned in" i], [aria-label*="Submitted" i], .A6dC2d')
+            );
+
             if (titleEl && dateText) {
               const linkEl = item.querySelector('a[href*="/c/"]') || item.closest('a') || item.querySelector('a');
               deadlines.push({
@@ -312,6 +338,7 @@
                 dueDate: dateText,
                 link: linkEl?.href || window.location.href,
                 course: courseEl?.textContent.trim() || course,
+                submitted: isSubmitted,
                 platform: 'Google Classroom'
               });
             }
@@ -326,6 +353,12 @@
             );
             const dateText = this.findDateInElement(item);
             const courseEl = item.querySelector('.j10vNd, .asQ4ud .A6dC2d, [class*="course"]');
+            const itemText = item.textContent || '';
+            const isSubmitted = isDonePage || !!(
+              itemText.match(/\b(turned in|submitted|done late|graded)\b/i) ||
+              item.querySelector('[aria-label*="Turned in" i], [aria-label*="Submitted" i]')
+            );
+
             if (titleEl && dateText) {
               const linkEl = item.querySelector('a') || item.closest('a');
               deadlines.push({
@@ -333,6 +366,7 @@
                 dueDate: dateText,
                 link: linkEl?.href || window.location.href,
                 course: courseEl?.textContent.trim() || course,
+                submitted: isSubmitted,
                 platform: 'Google Classroom'
               });
             }
@@ -764,8 +798,22 @@
     );
 
     // Merge with stored
-    const { deadlines: existing = [] } =
-      await chrome.storage.local.get('deadlines');
+    const { deadlines: existing = [], settings = {} } =
+      await chrome.storage.local.get(['deadlines', 'settings']);
+
+    // Check if auto-sync to Google Calendar is enabled
+    if (settings.autoCalendarSync) {
+      for (const d of deadlines) {
+        if (!d.submitted && !d.calendarSynced) {
+          try {
+            // Direct background injection or silent fetch
+            chrome.runtime.sendMessage({ action: 'autoSyncCalendar', deadline: d });
+            d.calendarSynced = true;
+          } catch (_) {}
+        }
+      }
+    }
+
     const merged = mergeDeadlines(existing, deadlines);
 
     await chrome.storage.local.set({

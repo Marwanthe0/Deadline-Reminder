@@ -13,17 +13,40 @@
       <p class="tagline">Customize notifications, domains, and advanced scraping rules.</p>
     </header>
 
-    <!-- ─── Notifications ─── -->
+    <!-- ─── Notifications & Alerts ─── -->
     <section class="card">
-      <h2>🔔 Notifications</h2>
+      <h2>🔔 Notifications & Alert Timing</h2>
       <label class="row">
         <span>Enable desktop notifications</span>
         <input type="checkbox" id="enableNotifications" checked>
       </label>
       <label class="row">
-        <span>Notify me this many hours before a deadline</span>
-        <input type="number" id="notifyHours" min="1" max="168" value="24"
-               class="input-sm">
+        <span>Play sound chime on alert</span>
+        <input type="checkbox" id="soundAlerts" checked>
+      </label>
+      <div class="row" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+        <span>Multi-stage reminder alerts (hours before deadline):</span>
+        <p class="hint">Enter comma-separated hours (e.g. <code>48, 24, 2</code> for 2 days, 1 day, and 2 hours prior):</p>
+        <input type="text" id="alertHours" placeholder="48, 24, 2" class="input-wide" style="width: 100%;">
+      </div>
+    </section>
+
+    <!-- ─── Zero-Click Calendar Sync ─── -->
+    <section class="card">
+      <h2>📅 Calendar Auto-Sync</h2>
+      <label class="row">
+        <div>
+          <span>Enable zero-click background sync</span>
+          <p class="hint" style="margin-bottom: 0;">Automatically tracks and queues assignments for calendar integration as soon as they are detected.</p>
+        </div>
+        <input type="checkbox" id="autoCalendarSync" checked>
+      </label>
+      <label class="row">
+        <div>
+          <span>Hide submitted / turned-in assignments</span>
+          <p class="hint" style="margin-bottom: 0;">Automatically suppresses alerts and marks completed work as submitted.</p>
+        </div>
+        <input type="checkbox" id="hideSubmitted" checked>
       </label>
     </section>
 

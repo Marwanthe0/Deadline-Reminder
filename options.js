@@ -5,7 +5,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
   // ─── DOM Refs ─────────────────────────────────────────────
   const enableNotifications  = document.getElementById('enableNotifications');
-  const notifyHours          = document.getElementById('notifyHours');
+  const soundAlerts          = document.getElementById('soundAlerts');
+  const alertHours           = document.getElementById('alertHours');
+  const autoCalendarSync     = document.getElementById('autoCalendarSync');
+  const hideSubmitted        = document.getElementById('hideSubmitted');
   const customDomains        = document.getElementById('customDomains');
   const customTitleSelector  = document.getElementById('customTitleSelector');
   const customDateSelector   = document.getElementById('customDateSelector');
@@ -33,7 +36,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   ]);
 
   enableNotifications.checked = settings.enableNotifications !== false;
-  notifyHours.value           = settings.notifyHoursBefore || 24;
+  soundAlerts.checked         = settings.soundAlerts !== false;
+  alertHours.value            = (settings.alertHours || [48, 24, 2]).join(', ');
+  autoCalendarSync.checked    = settings.autoCalendarSync !== false;
+  hideSubmitted.checked       = settings.hideSubmitted !== false;
   customDomains.value         = (settings.customDomains || []).join('\n');
   customTitleSelector.value   = settings.customTitleSelector || '';
   customDateSelector.value    = settings.customDateSelector || '';
@@ -54,10 +60,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       .map(d => d.trim())
       .filter(Boolean);
 
+    const parsedAlertHours = alertHours.value
+      .split(',')
+      .map(s => parseInt(s.trim(), 10))
+      .filter(n => !isNaN(n) && n > 0);
+
     await chrome.storage.local.set({
       settings: {
         enableNotifications: enableNotifications.checked,
-        notifyHoursBefore:   parseInt(notifyHours.value, 10) || 24,
+        soundAlerts:         soundAlerts.checked,
+        alertHours:          parsedAlertHours.length > 0 ? parsedAlertHours : [48, 24, 2],
+        autoCalendarSync:    autoCalendarSync.checked,
+        hideSubmitted:       hideSubmitted.checked,
         customDomains:       domains,
         customTitleSelector: customTitleSelector.value.trim(),
         customDateSelector:  customDateSelector.value.trim()

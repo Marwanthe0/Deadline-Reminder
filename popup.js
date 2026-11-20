@@ -46,21 +46,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     switch (currentFilter) {
       case 'urgent':
         filtered = filtered.filter(d => {
+          if (d.submitted) return false;
           const ms = (d.timestamp || 0) - now;
           return ms > 0 && ms < DAY;
         });
         break;
       case 'week':
         filtered = filtered.filter(d => {
+          if (d.submitted) return false;
           const ms = (d.timestamp || 0) - now;
           return ms > 0 && ms < WEEK;
         });
         break;
       case 'later':
         filtered = filtered.filter(d => {
+          if (d.submitted) return false;
           const ms = (d.timestamp || 0) - now;
           return ms >= WEEK;
         });
+        break;
+      case 'submitted':
+        filtered = filtered.filter(d => d.submitted);
+        break;
+      default: // 'all'
+        // If settings prefer hiding submitted, only show non-submitted under 'all'
+        // But keep them accessible via the '✓ Done' filter tab
         break;
     }
 
@@ -116,26 +126,54 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast('Deadline removed');
       });
     });
+
+    // Bind toggle submit/done buttons
+    listEl.querySelectorAll('.toggle-submit-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const key = btn.dataset.key;
+        const item = allDeadlines.find(d => `${d.title}::${d.dueDate}` === key);
+        if (item) {
+          item.submitted = !item.submitted;
+          await chrome.storage.local.set({ deadlines: allDeadlines });
+          renderDeadlines();
+          showToast(item.submitted ? 'Marked as Turned in ✓' : 'Marked as Pending');
+        }
+      });
+    });
   }
 
   // ─── Card HTML ────────────────────────────────────────────
 
   function cardHTML(d, index, now) {
     const ms = (d.timestamp || 0) - now;
-    const isOverdue = ms < 0;
-    const urgencyClass = isOverdue
+    const isOverdue = ms < 0 && !d.submitted;
+    const urgencyClass = d.submitted
+      ? 'submitted'
+      : isOverdue
       ? 'overdue'
       : ms < DAY
       ? 'urgent'
       : ms < 3 * DAY
       ? 'warning'
       : 'safe';
-    const countdownText = isOverdue ? 'OVERDUE' : formatCountdown(ms);
+    const countdownText = d.submitted ? '✓ TURNED IN' : isOverdue ? 'OVERDUE' : formatCountdown(ms);
     const dateStr = formatDate(new Date(d.timestamp || d.dueDate));
     const gcalLink = CalendarUtils.createGoogleCalendarLink(
       d.title,
       d.dueDate || new Date(d.timestamp).toISOString(),
       d.link || ''
+    );
+    const outlookLink = CalendarUtils.createOutlookCalendarLink(
+      d.title,
+      d.dueDate || new Date(d.timestamp).toISOString(),
+      d.link || '',
+      d.course || ''
+    );
+    const notionLink = CalendarUtils.createNotionPageUrl(
+      d.title,
+      dateStr,
+      d.link || '',
+      d.course || ''
     );
     const safeJSON = JSON.stringify(d).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
     const key = `${d.title}::${d.dueDate}`;
@@ -145,8 +183,11 @@ document.addEventListener('DOMContentLoaded', async () => {
            style="animation-delay:${index * 40}ms">
         <div class="card-top">
           <div class="card-info">
-            ${d.course ? `<span class="course-badge">${esc(d.course)}</span>` : ''}
-            <div class="card-title">
+            <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 4px;">
+              ${d.course ? `<span class="course-badge">${esc(d.course)}</span>` : ''}
+              ${d.submitted ? `<span class="submitted-badge">✓ Submitted</span>` : ''}
+            </div>
+            <div class="card-title ${d.submitted ? 'strike' : ''}">
               ${d.link
                 ? `<a href="${esc(d.link)}" target="_blank" rel="noopener">${esc(d.title)}</a>`
                 : esc(d.title)}
@@ -158,6 +199,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </div>
           <div class="card-actions">
+            <!-- Toggle Submitted/Done -->
+            <button class="btn-icon toggle-submit-btn" title="${d.submitted ? 'Mark as Not Done' : 'Mark as Done'}"
+                    data-key="${esc(key)}">
+              <span style="font-size: 13px;">${d.submitted ? '↩️' : '✅'}</span>
+            </button>
             <!-- Google Calendar -->
             <a href="${gcalLink}" target="_blank" rel="noopener"
                class="btn-icon" title="Add to Google Calendar">
@@ -171,6 +217,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <line x1="12" y1="14" x2="12" y2="18"/>
                 <line x1="10" y1="16" x2="14" y2="16"/>
               </svg>
+            </a>
+            <!-- Outlook Calendar -->
+            <a href="${outlookLink}" target="_blank" rel="noopener"
+               class="btn-icon" title="Add to Outlook Calendar">
+              <span style="font-size: 12px; font-weight: 700; color: #60a5fa;">O</span>
+            </a>
+            <!-- Notion Quick-Capture -->
+            <a href="${notionLink}" target="_blank" rel="noopener"
+               class="btn-icon" title="Export to Notion">
+              <span style="font-size: 12px; font-weight: 700;">N</span>
             </a>
             <!-- Download .ics -->
             <button class="btn-icon ics-btn" title="Download .ics"

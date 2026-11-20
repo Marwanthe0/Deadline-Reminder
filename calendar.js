@@ -26,6 +26,37 @@ const CalendarUtils = {
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
   },
 
+  // ─── Microsoft Outlook Web Calendar Pre-filled Link ───────
+
+  createOutlookCalendarLink(title, dateStr, url, course) {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '#';
+
+    const start = date.toISOString();
+    const end = new Date(date.getTime() + 60 * 60 * 1000).toISOString();
+
+    const params = new URLSearchParams({
+      path: '/calendar/action/compose',
+      rru: 'addevent',
+      subject: title + (course ? ` [${course}]` : ''),
+      startdt: start,
+      enddt: end,
+      body: url ? `Assignment: ${url}\nAdded by LMS Deadline Reminder` : 'Added by LMS Deadline Reminder'
+    });
+
+    return `https://outlook.live.com/calendar/0/action/compose?${params.toString()}`;
+  },
+
+  // ─── Notion Direct Template / Quick-Capture Link ──────────
+
+  createNotionPageUrl(title, dateStr, url, course) {
+    const text = encodeURIComponent(
+      `📌 ${title} (${course || 'Course'})\n📅 Due: ${dateStr}\n🔗 ${url || ''}`
+    );
+    // Uses Notion's official quick-capture web intent
+    return `https://www.notion.so/?action=new&title=${encodeURIComponent(title)}&body=${text}`;
+  },
+
   toGCalDate(date) {
     return date.toISOString().replace(/-|:|\.\d{3}/g, '');
   },
