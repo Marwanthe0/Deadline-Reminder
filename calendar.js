@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-//  Campus Deadline Radar — Calendar Utilities
+//  Deadline Reminder — Calendar Utilities
 //  Google Calendar links · .ics generation · file download
 // ═══════════════════════════════════════════════════════════════
 
@@ -18,8 +18,8 @@ const CalendarUtils = {
       text: title,
       dates: `${start}/${end}`,
       details: url
-        ? `Assignment link: ${url}\n\nAdded by Campus Deadline Radar`
-        : 'Added by Campus Deadline Radar',
+        ? `Assignment link: ${url}\n\nAdded by Deadline Reminder`
+        : 'Added by Deadline Reminder',
       sf: 'true'
     });
 
@@ -41,7 +41,7 @@ const CalendarUtils = {
       subject: title + (course ? ` [${course}]` : ''),
       startdt: start,
       enddt: end,
-      body: url ? `Assignment: ${url}\nAdded by LMS Deadline Reminder` : 'Added by LMS Deadline Reminder'
+      body: url ? `Assignment: ${url}\nAdded by Deadline Reminder` : 'Added by Deadline Reminder'
     });
 
     return `https://outlook.live.com/calendar/0/action/compose?${params.toString()}`;
@@ -74,7 +74,7 @@ const CalendarUtils = {
     const description = [
       course ? `Course: ${course}` : '',
       url ? `Link: ${url}` : '',
-      'Added by Campus Deadline Radar'
+      'Added by Deadline Reminder'
     ]
       .filter(Boolean)
       .join('\\n');
@@ -125,7 +125,7 @@ const CalendarUtils = {
           d.course ? `Course: ${d.course}` : '',
           d.link ? `Link: ${d.link}` : '',
           `Platform: ${d.platform || 'Unknown'}`,
-          'Added by Campus Deadline Radar'
+          'Added by Deadline Reminder'
         ]
           .filter(Boolean)
           .join('\\n');
@@ -155,10 +155,10 @@ const CalendarUtils = {
     return [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Campus Deadline Radar//EN',
+      'PRODID:-//Deadline Reminder//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
-      'X-WR-CALNAME:Campus Deadlines',
+      'X-WR-CALNAME:Deadlines',
       ...events,
       'END:VCALENDAR'
     ].join('\r\n');
@@ -175,14 +175,14 @@ const CalendarUtils = {
   },
 
   uid() {
-    return `cdr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@campus-deadline-radar`;
+    return `dr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@deadline-reminder`;
   },
 
   wrapCalendar(eventLines) {
     return [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Campus Deadline Radar//EN',
+      'PRODID:-//Deadline Reminder//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       ...eventLines,

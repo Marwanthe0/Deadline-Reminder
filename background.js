@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-//  Campus Deadline Radar — Background Service Worker
+//  Deadline Reminder — Background Service Worker
 //  Handles: badge updates, alarm notifications, storage mgmt
 // ═══════════════════════════════════════════════════════════════
 
@@ -205,4 +205,4 @@ chrome.notifications.onClicked.addListener(async notificationId => {
 
 // ─── Init ────────────────────────────────────────────────────
 updateBadge();
-console.log('[Campus Deadline Radar] Service worker initialized.');
+console.log('[Deadline Reminder] Service worker initialized.');

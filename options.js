@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-//  Campus Deadline Radar — Options Page Script
+//  Deadline Reminder — Options Page Script
 // ═══════════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', async () => {

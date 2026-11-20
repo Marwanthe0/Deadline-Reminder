@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
-//  Campus Deadline Radar — Content Script
-//  Auto-detects LMS platform and extracts assignment deadlines
+//  Deadline Reminder — Content Script
+//  Auto-detects educational platform and extracts assignment deadlines
 // ═══════════════════════════════════════════════════════════════
 
 (function () {
@@ -735,7 +735,7 @@
     if (!adapter) return;
 
     console.log(
-      `[Campus Deadline Radar] Platform detected: ${adapter.name} (${platform})`
+      `[Deadline Reminder] Platform detected: ${adapter.name} (${platform})`
     );
 
     let deadlines = [];
@@ -789,12 +789,12 @@
     deadlines = dedup(deadlines);
 
     if (deadlines.length === 0) {
-      console.log('[Campus Deadline Radar] No deadlines found on this page.');
+      console.log('[Deadline Reminder] No deadlines found on this page.');
       return;
     }
 
     console.log(
-      `[Campus Deadline Radar] Extracted ${deadlines.length} deadline(s).`
+      `[Deadline Reminder] Extracted ${deadlines.length} deadline(s).`
     );
 
     // Merge with stored
@@ -823,10 +823,10 @@
     });
 
     console.log(
-      `[LMS Deadline Reminder] Stored ${merged.length} total deadline(s).`
+      `[Deadline Reminder] Stored ${merged.length} total deadline(s).`
     );
 
-    // Show floating in-page badge / notification on LMS page
+    // Show floating in-page badge / notification on supported course page
     injectInPageBadge(merged.length, deadlines.length);
   }
 
@@ -841,15 +841,15 @@
   // ═══════════════════════════════════════════════════════════
 
   function injectInPageBadge(count, newItemsCount) {
-    if (document.getElementById('lms-radar-floating-badge')) {
-      const existingBadge = document.getElementById('lms-radar-floating-badge');
-      const countEl = existingBadge.querySelector('.lms-badge-count');
+    if (document.getElementById('deadline-reminder-badge')) {
+      const existingBadge = document.getElementById('deadline-reminder-badge');
+      const countEl = existingBadge.querySelector('.dr-badge-count');
       if (countEl) countEl.textContent = count;
       return;
     }
 
     const host = document.createElement('div');
-    host.id = 'lms-radar-floating-badge';
+    host.id = 'deadline-reminder-badge';
     host.style.cssText = `
       position: fixed;
       bottom: 24px;
@@ -868,20 +868,20 @@
       cursor: pointer;
       user-select: none;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      animation: lmsSlideUp 0.4s ease-out;
+      animation: drSlideUp 0.4s ease-out;
     `;
 
     host.innerHTML = `
       <style>
-        @keyframes lmsSlideUp {
+        @keyframes drSlideUp {
           from { transform: translateY(40px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
         }
-        #lms-radar-floating-badge:hover {
+        #deadline-reminder-badge:hover {
           background: #1e293b;
           border-color: #475569;
         }
-        .lms-badge-count {
+        .dr-badge-count {
           background: #2563eb;
           color: #ffffff;
           font-weight: 600;
@@ -891,11 +891,10 @@
         }
       </style>
       <span style="font-weight: 600; letter-spacing: -0.2px;">Deadlines</span>
-      <span class="lms-badge-count">${count}</span>
+      <span class="dr-badge-count">${count}</span>
     `;
 
     host.addEventListener('click', () => {
-      // Notify background to open popup or alert summary
       showInPageDeadlinesModal();
     });
 
@@ -903,7 +902,7 @@
   }
 
   async function showInPageDeadlinesModal() {
-    let modal = document.getElementById('lms-radar-modal');
+    let modal = document.getElementById('deadline-reminder-modal');
     if (modal) {
       modal.remove();
       return;
@@ -914,7 +913,7 @@
     const sorted = deadlines.filter(d => (d.timestamp || 0) > now - 86400000);
 
     modal = document.createElement('div');
-    modal.id = 'lms-radar-modal';
+    modal.id = 'deadline-reminder-modal';
     modal.style.cssText = `
       position: fixed;
       bottom: 74px;
@@ -931,13 +930,13 @@
       overflow: hidden;
       font-family: system-ui, -apple-system, sans-serif;
       color: #f1f5f9;
-      animation: lmsSlideUp 0.25s ease-out;
+      animation: drSlideUp 0.25s ease-out;
     `;
 
     modal.innerHTML = `
       <div style="padding: 12px 16px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; background: #1e293b;">
         <span style="font-weight: 600; font-size: 13px; letter-spacing: -0.2px;">Upcoming Deadlines (${sorted.length})</span>
-        <button id="lms-close-modal" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; padding: 2px 6px;">×</button>
+        <button id="dr-close-modal" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; padding: 2px 6px;">×</button>
       </div>
       <div style="padding: 10px; overflow-y: auto; flex: 1; max-height: 380px;">
         ${sorted.length === 0 ? '<p style="font-size: 12px; color: #94a3b8; text-align: center; padding: 24px;">No upcoming deadlines found.</p>' : sorted.map(d => {
@@ -958,7 +957,7 @@
     `;
 
     document.body.appendChild(modal);
-    document.getElementById('lms-close-modal')?.addEventListener('click', () => modal.remove());
+    document.getElementById('dr-close-modal')?.addEventListener('click', () => modal.remove());
   }
 
   // ─── Continuous SPA Observer ─────────────────────────────

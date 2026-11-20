@@ -1,100 +1,112 @@
-# LMS Deadline Reminder
+# Deadline Reminder
 
-A lightweight, client-side Chromium extension that detects assignment deadlines across university Learning Management Systems (Canvas, Moodle, Google Classroom, Blackboard, and Brightspace) and exports them directly to **Google Calendar** or standardized **iCalendar (.ics)** files.
+A lightweight, privacy-focused Chromium browser extension that automatically detects coursework and assignment deadlines across educational platforms (Canvas, Moodle, Google Classroom, Blackboard, and Brightspace) and synchronizes them directly with **Google Calendar**, **Microsoft Outlook**, or standard **iCalendar (.ics)** formats.
 
-Built with Manifest V3, without any external server dependencies, database clusters, or complex OAuth handshakes. All data stays local in browser storage.
-
----
-
-## Key Features
-
-- **Automated Scraping**: Detects and extracts assignments, due dates, course names, and direct links when navigating your university dashboard or assignment pages.
-- **Universal Calendar Export**:
-  - Direct pre-filled Google Calendar event generation.
-  - Multi-platform `.ics` file generation (RFC 5545 compatible) for Apple Calendar, Outlook, Thunderbird, and Notion.
-- **Urgency Visualization**: Prioritizes upcoming deliverables with color-coded status badges:
-  - 🔴 **Urgent**: Less than 24 hours remaining.
-  - 🟡 **Approaching**: Within 3 days.
-  - 🟢 **Safe**: Scheduled further out.
-- **Local Alerts & Badges**: Periodic checks trigger desktop notifications prior to impending cutoffs, with a live countdown badge displayed directly on the extension icon.
-- **Extensible Heuristics & Selectors**: Includes a resilient fallback parser for custom or self-hosted university portals, along with an options page to configure site-specific DOM selectors and custom domains.
-- **Privacy First**: Fully client-side. No user data, session cookies, or LMS credentials ever leave your machine.
+Designed with Manifest V3. Runs 100% locally in the browser with zero third-party servers, zero credential transmission, and zero telemetry.
 
 ---
 
-## Supported Learning Platforms
+## Features
 
-| LMS | Auto-Detection Match Pattern | Extraction Target |
+- **Automated Deadline Extraction**: Continuously identifies assignments, due dates, course names, and submission URLs while navigating your course dashboard or coursework tabs.
+- **Universal Calendar Integration**:
+  - One-click pre-filled Google Calendar event creation.
+  - One-click Microsoft Outlook Web Calendar event creation.
+  - Direct template capture for Notion student workspaces.
+  - Multi-platform `.ics` file generation (RFC 5545 compliant) compatible with Apple Calendar, Thunderbird, and desktop calendar software.
+- **Completion & State Tracking**:
+  - Automatically identifies submitted or turned-in assignments on Google Classroom and Canvas.
+  - Dedicated "Completed" view and manual completion toggle.
+- **Multi-Stage Notification Intervals**:
+  - Customizable alert thresholds (e.g. 48h, 24h, 2h before submission cutoffs).
+  - Optional sound notifications for urgent deadlines.
+- **Custom Portals & Heuristic Fallback**:
+  - Configurable custom domains for university-hosted subdomains.
+  - Custom DOM title and date CSS selector overrides.
+- **Offline & Private**: All data is stored in `chrome.storage.local`.
+
+---
+
+## Supported Educational Platforms
+
+| Platform | Domain Patterns | Scope of Extraction |
 | :--- | :--- | :--- |
-| **Canvas LMS** | `*.instructure.com` | Assignment tables, planner cards, syllabus schedule, calendar |
-| **Moodle** | `*.moodle.org`, `*.moodlecloud.com` + self-hosted | Timeline block, upcoming events, course activity modules |
-| **Google Classroom** | `classroom.google.com` | Coursework lists, student to-do views |
-| **Blackboard Learn / Ultra** | `*.blackboard.com` | Activity stream, course assignment lists |
+| **Canvas** | `*.instructure.com` | Assignment tables, planner cards, syllabus, calendar agenda |
+| **Moodle** | `*.moodle.org`, `*.moodlecloud.com` + custom hostnames | Timeline blocks, upcoming events, course activity lists |
+| **Google Classroom** | `classroom.google.com` | Coursework lists, classwork streams, student to-do dashboards |
+| **Blackboard Learn / Ultra** | `*.blackboard.com` | Activity streams, course assignment content lists |
 | **Brightspace / D2L** | `*.brightspace.com`, `*.d2l.com` | Assignment lists, upcoming work widgets |
-| **Custom Portals** | User-defined domains | Heuristic table/list date-parsing engine + configurable CSS selectors |
+| **Custom / University Portals** | User-defined hostnames | Heuristic table and list parser with configurable selectors |
 
 ---
 
-## Installation
+## Quick Installation (Developer Mode)
 
-### Load Unpacked Extension (Developer Mode)
+You can install this extension on any Chromium-based browser (Google Chrome, Brave, Microsoft Edge, Arc, Opera) in under a minute without using the Chrome Web Store:
 
-1. Clone or download this repository:
-   ```bash
-   git clone https://github.com/Marwanthe0/LMS-Deadline-Reminder.git
-   ```
-2. Open Google Chrome (or any Chromium browser like Brave, Edge, or Arc).
-3. Navigate to `chrome://extensions`.
-4. Enable **Developer mode** via the toggle switch in the top-right corner.
-5. Click **Load unpacked** and select the root directory of this repository (`LMS-Deadline-Reminder`).
-6. Pin the extension to your browser toolbar for quick access.
+1. **Download the Extension**:
+   - Download the latest **`Deadline-Reminder.zip`** from the [GitHub Releases](https://github.com/Marwanthe0/LMS-Deadline-Reminder/releases) page (or clone this repository).
+   - Unzip the downloaded file onto your computer.
 
----
+2. **Open Extensions Manager**:
+   - In your browser address bar, navigate to:
+     - Chrome / Brave / Arc: `chrome://extensions`
+     - Microsoft Edge: `edge://extensions`
 
-## Usage Workflow
+3. **Enable Developer Mode**:
+   - Turn on the **Developer mode** toggle in the top-right corner.
 
-1. Log into your university portal as usual.
-2. Navigate to your course dashboard, upcoming tasks, or assignments overview.
-3. The extension content script runs automatically on recognized domains, extracting deadlines into `chrome.storage.local`.
-4. Click the extension toolbar icon:
-   - View your upcoming assignments sorted in chronological order.
-   - Click the **Google Calendar** icon on any task to add it immediately.
-   - Click the **.ics** icon to download a calendar file for individual events, or use **Export All (.ics)** for your full schedule.
-5. If you are on an unlisted university subdomain, click the **⟳ Scan** button inside the popup to force an active-tab extraction.
+4. **Load the Extension**:
+   - Click **Load unpacked** in the top-left corner.
+   - Select the unzipped folder containing `manifest.json`.
+   - Pin **Deadline Reminder** to your browser toolbar.
 
 ---
 
-## Configuration & Options
+## Usage Guide
 
-Access the settings page by clicking the gear icon (**⚙**) in the popup:
-
-- **Notification Lead Time**: Configure how many hours in advance you receive desktop reminders (default: 24h).
-- **Custom Domains**: Add your institution's hostnames (e.g., `lms.university.edu`) to ensure scripts inject automatically.
-- **Custom CSS Selectors**: Specify custom CSS selectors for assignment titles and due dates on bespoke university portals.
-- **Data Management**: Export your entire stored deadline database to JSON or import from an existing backup.
+1. Log into your university or course portal as you normally would.
+2. Navigate to your course classwork, assignments page, or dashboard.
+3. The extension detects upcoming deliverables in the background and updates the toolbar badge.
+4. Open the extension popup to view deliverables sorted by chronological urgency:
+   - Click the checkmark icon to toggle completion.
+   - Click the calendar icons to export directly to Google Calendar, Outlook, Notion, or download an `.ics` file.
+   - Click **Export Schedule (.ics)** to export all upcoming events in a single calendar feed.
 
 ---
 
-## Architecture
+## Configuration
+
+Click the gear icon in the extension popup to open the settings:
+- **Reminder Intervals**: Set custom alert milestones (e.g., `48, 24, 2` hours).
+- **Sound Alerts**: Toggle audio notification chimes.
+- **Custom Domains**: Add institution-specific URLs (e.g., `canvas.university.edu`).
+- **DOM Selectors**: Define custom CSS selectors for custom or legacy university portals.
+- **Data Backup**: Export or import your stored deadline database via JSON.
+
+---
+
+## Technical Architecture
 
 ```
-LMS-Deadline-Reminder/
+Deadline-Reminder/
 ├── manifest.json       # Manifest V3 configuration & permission declarations
-├── background.js       # Background service worker for alarms, notifications & icon badges
-├── content.js          # Platform adapters & heuristic DOM scrapers
-├── calendar.js         # RFC 5545 iCalendar serialization & Google Calendar URL encoder
-├── popup.html          # Extension popup interface
-├── popup.css           # Clean dark-mode stylesheet & responsive card layout
-├── popup.js            # Popup interaction, state management, and filtering logic
-├── options.html        # Settings page layout
-├── options.css         # Options styling
-├── options.js          # Options persistence and JSON import/export handlers
-├── icons/              # Extension asset sizes (16, 32, 48, 128px)
-└── README.md
+├── background.js       # Service worker for periodic alarms, notifications & badge updates
+├── content.js          # Platform DOM adapters, relative date parser & SPA observers
+├── calendar.js         # RFC 5545 iCalendar engine & calendar link generators
+├── popup.html          # Extension popup UI
+├── popup.css           # Clean dark-mode stylesheet
+├── popup.js            # Popup filtering, rendering, and interaction logic
+├── options.html        # Settings page UI
+├── options.css         # Settings page stylesheet
+├── options.js          # Configuration persistence & backup handlers
+├── icons/              # Extension icons (16, 32, 48, 128px)
+├── LICENSE             # MIT License
+└── README.md           # Documentation
 ```
 
 ---
 
 ## License
 
-Distributed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).

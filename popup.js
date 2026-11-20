@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-//  Campus Deadline Radar — Popup Script
+//  Deadline Reminder — Popup Script
 //  Renders deadline cards, handles filters, scan, export & clear
 // ═══════════════════════════════════════════════════════════════
 
