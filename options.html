@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Deadline Radar — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="page-header">
+      <h1>⚙️ Campus Deadline Radar — Settings</h1>
+      <p class="tagline">Customize notifications, domains, and advanced scraping rules.</p>
+    </header>
+
+    <!-- ─── Notifications ─── -->
+    <section class="card">
+      <h2>🔔 Notifications</h2>
+      <label class="row">
+        <span>Enable desktop notifications</span>
+        <input type="checkbox" id="enableNotifications" checked>
+      </label>
+      <label class="row">
+        <span>Notify me this many hours before a deadline</span>
+        <input type="number" id="notifyHours" min="1" max="168" value="24"
+               class="input-sm">
+      </label>
+    </section>
+
+    <!-- ─── Custom Domains ─── -->
+    <section class="card">
+      <h2>🌐 Custom Domains</h2>
+      <p class="hint">
+        Add your university portal domains so the content script auto-runs there.
+        One domain per line (e.g. <code>portal.myuniversity.edu</code>).
+      </p>
+      <textarea id="customDomains" rows="4"
+                placeholder="portal.myuniversity.edu&#10;lms.college.edu"></textarea>
+      <p class="hint muted">
+        After saving, you'll need to reload the extension on
+        <code>chrome://extensions</code> for new host permissions to take effect.
+      </p>
+    </section>
+
+    <!-- ─── Custom Selectors ─── -->
+    <section class="card">
+      <h2>🎯 Custom CSS Selectors</h2>
+      <p class="hint">
+        Advanced: provide CSS selectors the generic scraper will use on custom
+        portals. Leave blank to use the built-in heuristics.
+      </p>
+      <label class="row">
+        <span>Title selector</span>
+        <input type="text" id="customTitleSelector"
+               placeholder=".assignment-title a" class="input-wide">
+      </label>
+      <label class="row">
+        <span>Date selector</span>
+        <input type="text" id="customDateSelector"
+               placeholder=".due-date" class="input-wide">
+      </label>
+    </section>
+
+    <!-- ─── Data ─── -->
+    <section class="card">
+      <h2>📊 Data Management</h2>
+      <div class="row">
+        <span>Stored deadlines</span>
+        <strong id="deadlineCount">0</strong>
+      </div>
+      <div class="row">
+        <span>Last scan</span>
+        <span id="lastScanInfo">—</span>
+      </div>
+      <div class="btn-row">
+        <button id="exportJson" class="btn">Export JSON Backup</button>
+        <button id="importJson" class="btn">Import JSON</button>
+        <button id="clearAll" class="btn btn-danger">Clear All Data</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </section>
+
+    <!-- ─── Save Bar ─── -->
+    <div class="save-bar">
+      <span id="saveStatus"></span>
+      <button id="saveBtn" class="btn btn-primary">💾 Save Settings</button>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
