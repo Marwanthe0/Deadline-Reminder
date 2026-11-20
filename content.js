@@ -290,48 +290,49 @@
       name: 'Google Classroom',
       extract() {
         const deadlines = [];
+        const course = this.getCourse();
 
-        // Work / assignment cards (data attributes)
+        // 1) Work / assignment cards & coursework items
         document
           .querySelectorAll(
-            '[data-assignmentid], [data-courseworkid], [data-item-id]'
+            '[data-assignmentid], [data-courseworkid], [data-item-id], [data-stream-item-id], c-wiz [role="listitem"], .y2abvd'
           )
           .forEach(item => {
             const titleEl = item.querySelector(
-              '[class*="title"], h2, h3, [role="heading"], a'
+              '[class*="title"], h2, h3, [role="heading"], a[href*="/c/"]'
             );
-            const dateEl = item.querySelector(
-              '[class*="due"], [class*="date"], time'
-            );
+            const dateText = this.findDateInElement(item);
             const courseEl = item.querySelector(
-              '[class*="course"], [class*="class"]'
+              '[class*="course"], [class*="class"], .j10vNd'
             );
-            if (titleEl) {
+            if (titleEl && dateText) {
+              const linkEl = item.querySelector('a[href*="/c/"]') || item.closest('a') || item.querySelector('a');
               deadlines.push({
                 title: titleEl.textContent.trim(),
-                dueDate: dateEl?.textContent.trim() || '',
-                link:
-                  item.querySelector('a')?.href || window.location.href,
-                course: courseEl?.textContent.trim() || 'Google Classroom',
+                dueDate: dateText,
+                link: linkEl?.href || window.location.href,
+                course: courseEl?.textContent.trim() || course,
                 platform: 'Google Classroom'
               });
             }
           });
 
-        // To-do / assigned work page — heuristic scan
+        // 2) To-do / assigned work page list items
         document
-          .querySelectorAll('[role="listitem"]')
+          .querySelectorAll('[role="listitem"], .asQ4ud, .MHp48d, .VnOHwf')
           .forEach(item => {
             const titleEl = item.querySelector(
-              'h2, h3, [role="heading"], a'
+              'h2, h3, [role="heading"], .YVvGBb, a'
             );
             const dateText = this.findDateInElement(item);
+            const courseEl = item.querySelector('.j10vNd, .asQ4ud .A6dC2d, [class*="course"]');
             if (titleEl && dateText) {
+              const linkEl = item.querySelector('a') || item.closest('a');
               deadlines.push({
                 title: titleEl.textContent.trim(),
                 dueDate: dateText,
-                link: item.querySelector('a')?.href || '',
-                course: 'Google Classroom',
+                link: linkEl?.href || window.location.href,
+                course: courseEl?.textContent.trim() || course,
                 platform: 'Google Classroom'
               });
             }
@@ -339,21 +340,41 @@
 
         return deadlines;
       },
+      getCourse() {
+        return (
+          document.querySelector('h1[data-course-title], [aria-label="Class name"], h1')?.textContent?.trim() ||
+          document.title.split(/[-–—|•]/)[0]?.trim() ||
+          'Google Classroom'
+        );
+      },
       findDateInElement(el) {
-        const text = el.textContent;
+        const text = el.textContent || '';
+
+        // 1. Check relative phrasing: "Due tomorrow, 11:59 PM", "Due today at 5 PM", "Due Friday"
+        const relMatch = text.match(/(?:Due|Deadline|Submit by)[:\s]*((?:today|tomorrow|\w+day)[^,\n\r]*(?:,\s*\d{1,2}:\d{2}\s*(?:AM|PM)?)?)/i);
+        if (relMatch) return relMatch[1].trim();
+
+        // 2. Check standard dates: "Due Nov 25", "Due 11/25/2026", "Due Oct 12, 11:59 PM"
         const patterns = [
-          /(?:Due|Deadline|Submit by)[:\s]*([\w\s,]+\d{1,2}[,\s]+\d{4}(?:\s+\d{1,2}:\d{2}\s*(?:AM|PM)?)?)/i,
-          /(\w{3,9}\s+\d{1,2},?\s*\d{4})/,
-          /(\d{1,2}\/\d{1,2}\/\d{2,4})/
+          /(?:Due|Deadline|Submit by)[:\s]*([\w\s,]+\d{1,2}(?:[,\s]+\d{4})?(?:\s+(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM)?)?)/i,
+          /(\w{3,9}\s+\d{1,2},?\s*\d{4}(?:\s+\d{1,2}:\d{2}\s*(?:AM|PM)?)?)/i,
+          /(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?(?:\s+\d{1,2}:\d{2}\s*(?:AM|PM)?)?)/
         ];
         for (const p of patterns) {
           const m = text.match(p);
           if (m) return m[1].trim();
         }
-        const timeEl = el.querySelector('time, [datetime]');
-        return (
-          timeEl?.getAttribute('datetime') || timeEl?.textContent.trim() || ''
-        );
+
+        const timeEl = el.querySelector('time, [datetime], [aria-label*="Due" i]');
+        if (timeEl) {
+          return (
+            timeEl.getAttribute('datetime') ||
+            timeEl.getAttribute('aria-label') ||
+            timeEl.textContent.trim()
+          );
+        }
+
+        return '';
       }
     },
 
@@ -551,26 +572,84 @@
     return el.textContent.replace(/^Due:?\s*/i, '').trim();
   }
 
+  function parseRelativeDate(str) {
+    if (!str) return null;
+    const now = new Date();
+    const text = str.trim();
+
+    // Check "today" or "tomorrow"
+    const relMatch = text.match(/\b(today|tomorrow)\b/i);
+    // Check weekdays: "Monday", "Tue", "Wednesday", etc.
+    const dayMatch = text.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i);
+
+    // Extract optional time like "11:59 PM", "23:59", "5:00 PM", "at 5pm"
+    let hours = 23, minutes = 59; // default to end of day
+    const timeMatch = text.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+    if (timeMatch && (timeMatch[3] || text.includes(':'))) {
+      let h = parseInt(timeMatch[1], 10);
+      let m = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+      const meridiem = timeMatch[3]?.toLowerCase();
+      if (meridiem === 'pm' && h < 12) h += 12;
+      if (meridiem === 'am' && h === 12) h = 0;
+      hours = h;
+      minutes = m;
+    }
+
+    if (relMatch) {
+      const target = new Date(now);
+      if (relMatch[1].toLowerCase() === 'tomorrow') {
+        target.setDate(target.getDate() + 1);
+      }
+      target.setHours(hours, minutes, 0, 0);
+      return target.toISOString();
+    }
+
+    if (dayMatch) {
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const targetDay = days.indexOf(dayMatch[1].toLowerCase());
+      const currentDay = now.getDay();
+      let diff = targetDay - currentDay;
+      if (diff <= 0) diff += 7; // Next occurrence of that weekday
+      const target = new Date(now);
+      target.setDate(target.getDate() + diff);
+      target.setHours(hours, minutes, 0, 0);
+      return target.toISOString();
+    }
+
+    return null;
+  }
+
   function normalizeDate(str) {
     if (!str) return null;
 
-    // Try native parse
+    // 1. Try relative date translation (today, tomorrow, weekday names)
+    const relIso = parseRelativeDate(str);
+    if (relIso) return relIso;
+
+    // 2. Try native parse
     let d = new Date(str);
     if (!isNaN(d.getTime()) && d.getFullYear() > 2000) return d.toISOString();
 
-    // Strip ordinal suffixes (1st, 2nd, 3rd, 4th …)
+    // 3. If year is missing like "Nov 25, 11:59 PM" -> append current year
+    const monthPattern = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}\b/i;
+    if (monthPattern.test(str) && !/\b20\d{2}\b/.test(str)) {
+      const withYear = `${str}, ${new Date().getFullYear()}`;
+      d = new Date(withYear);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+
+    // 4. Strip ordinal suffixes (1st, 2nd, 3rd, 4th …)
     const cleaned = str.replace(/(\d+)(st|nd|rd|th)/gi, '$1').trim();
     d = new Date(cleaned);
     if (!isNaN(d.getTime()) && d.getFullYear() > 2000) return d.toISOString();
 
-    // DD/MM/YYYY or MM/DD/YYYY
+    // 5. DD/MM/YYYY or MM/DD/YYYY
     const slashMatch = cleaned.match(
       /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/
     );
     if (slashMatch) {
       let [, a, b, year] = slashMatch;
       if (year.length === 2) year = '20' + year;
-      // Try MM/DD first (US), then DD/MM
       for (const iso of [
         `${year}-${a.padStart(2, '0')}-${b.padStart(2, '0')}`,
         `${year}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`
@@ -696,19 +775,197 @@
     });
 
     console.log(
-      `[Campus Deadline Radar] Stored ${merged.length} total deadline(s).`
+      `[LMS Deadline Reminder] Stored ${merged.length} total deadline(s).`
     );
+
+    // Show floating in-page badge / notification on LMS page
+    injectInPageBadge(merged.length, deadlines.length);
+  }
+
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  FLOATING IN-PAGE BADGE & POPUP
+  // ═══════════════════════════════════════════════════════════
+
+  function injectInPageBadge(count, newItemsCount) {
+    if (document.getElementById('lms-radar-floating-badge')) {
+      const existingBadge = document.getElementById('lms-radar-floating-badge');
+      const countEl = existingBadge.querySelector('.lms-badge-count');
+      if (countEl) countEl.textContent = count;
+      return;
+    }
+
+    const host = document.createElement('div');
+    host.id = 'lms-radar-floating-badge';
+    host.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0f172a;
+      color: #f1f5f9;
+      padding: 10px 16px;
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: lmsSlideUp 0.4s ease-out;
+    `;
+
+    host.innerHTML = `
+      <style>
+        @keyframes lmsSlideUp {
+          from { transform: translateY(50px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        #lms-radar-floating-badge:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 14px 30px rgba(0,0,0,0.5), 0 0 0 1px #3b82f6;
+        }
+        .lms-badge-count {
+          background: #ef4444;
+          color: #fff;
+          font-weight: 700;
+          font-size: 11px;
+          padding: 2px 7px;
+          border-radius: 12px;
+        }
+      </style>
+      <span style="font-size: 16px;">📡</span>
+      <span style="font-weight: 600;">LMS Deadlines</span>
+      <span class="lms-badge-count">${count}</span>
+      ${newItemsCount > 0 ? `<span style="font-size: 11px; color: #10b981; font-weight: 500;">(+${newItemsCount} new)</span>` : ''}
+    `;
+
+    host.addEventListener('click', () => {
+      // Notify background to open popup or alert summary
+      showInPageDeadlinesModal();
+    });
+
+    document.body.appendChild(host);
+  }
+
+  async function showInPageDeadlinesModal() {
+    let modal = document.getElementById('lms-radar-modal');
+    if (modal) {
+      modal.remove();
+      return;
+    }
+
+    const { deadlines = [] } = await chrome.storage.local.get('deadlines');
+    const now = Date.now();
+    const sorted = deadlines.filter(d => (d.timestamp || 0) > now - 86400000);
+
+    modal = document.createElement('div');
+    modal.id = 'lms-radar-modal';
+    modal.style.cssText = `
+      position: fixed;
+      bottom: 74px;
+      right: 24px;
+      width: 360px;
+      max-height: 480px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #f1f5f9;
+      animation: lmsSlideUp 0.25s ease-out;
+    `;
+
+    modal.innerHTML = `
+      <div style="padding: 12px 16px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; background: #1e293b;">
+        <span style="font-weight: 700; font-size: 14px;">📡 Detected Deadlines (${sorted.length})</span>
+        <button id="lms-close-modal" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer;">✕</button>
+      </div>
+      <div style="padding: 10px; overflow-y: auto; flex: 1; max-height: 380px;">
+        ${sorted.length === 0 ? '<p style="font-size: 12px; color: #94a3b8; text-align: center; padding: 20px;">No upcoming deadlines found.</p>' : sorted.map(d => {
+          const ms = (d.timestamp || 0) - now;
+          const urgencyColor = ms < 86400000 ? '#ef4444' : ms < 259200000 ? '#f59e0b' : '#10b981';
+          const dateStr = new Date(d.timestamp || d.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+          return `
+            <div style="background: #1e293b; border-left: 3px solid ${urgencyColor}; border-radius: 6px; padding: 10px; margin-bottom: 8px;">
+              <div style="font-size: 11px; color: #3b82f6; font-weight: 600;">${esc(d.course || '')}</div>
+              <div style="font-size: 13px; font-weight: 600; margin: 3px 0;">
+                <a href="${esc(d.link || '#')}" target="_blank" style="color: #f1f5f9; text-decoration: none;">${esc(d.title)}</a>
+              </div>
+              <div style="font-size: 11px; color: #94a3b8;">📅 ${dateStr}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.getElementById('lms-close-modal')?.addEventListener('click', () => modal.remove());
+  }
+
+  // ─── Continuous SPA Observer ─────────────────────────────
+
+  function startSPAObserver() {
+    let lastUrl = window.location.href;
+    let scanTimeout = null;
+
+    // Listen to pushState / replaceState for client-side navigation
+    const origPushState = history.pushState;
+    history.pushState = function () {
+      origPushState.apply(this, arguments);
+      triggerScan();
+    };
+
+    const origReplaceState = history.replaceState;
+    history.replaceState = function () {
+      origReplaceState.apply(this, arguments);
+      triggerScan();
+    };
+
+    window.addEventListener('popstate', triggerScan);
+
+    // Mutation observer for DOM additions (e.g. tabs loading coursework dynamically)
+    const observer = new MutationObserver(() => {
+      if (window.location.href !== lastUrl) {
+        lastUrl = window.location.href;
+        triggerScan();
+      }
+    });
+
+    observer.observe(document.body || document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+
+    function triggerScan() {
+      clearTimeout(scanTimeout);
+      scanTimeout = setTimeout(() => {
+        main();
+      }, 1200);
+    }
   }
 
   // ─── Execute ──────────────────────────────────────────────
 
   main();
+  startSPAObserver();
 
   // Listen for manual-scan requests from popup
   if (chrome.runtime?.onMessage) {
     chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       if (msg.action === 'manualScan') {
-        window.__cdr_scanned = false;
         main().then(() => sendResponse({ success: true }));
         return true;
       }
