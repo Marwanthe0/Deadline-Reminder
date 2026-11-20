@@ -78,7 +78,6 @@ async function checkAndNotify() {
         const id = `${d.title}::${d.dueDate}::${threshold}h`;
 
         if (hoursLeft <= threshold && !newlyNotified.includes(id)) {
-          const icon = hoursLeft < 3 ? '🚨' : hoursLeft < 12 ? '⏰' : '📌';
           const timeDesc = threshold >= 24
             ? `${Math.round(threshold / 24)} day${Math.round(threshold / 24) > 1 ? 's' : ''}`
             : `${threshold} hour${threshold > 1 ? 's' : ''}`;
@@ -86,7 +85,7 @@ async function checkAndNotify() {
           chrome.notifications.create(id, {
             type: 'basic',
             iconUrl: 'icons/icon128.png',
-            title: `${icon} Deadline Reminder: ${d.title}`,
+            title: `Deadline: ${d.title}`,
             message: `Due in approximately ${Math.round(hoursLeft)} hours (${timeDesc} alert).\nCourse: ${d.course || 'LMS'}`,
             priority: hoursLeft < 6 ? 2 : 1
           });

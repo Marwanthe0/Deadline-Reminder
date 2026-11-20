@@ -874,26 +874,24 @@
     host.innerHTML = `
       <style>
         @keyframes lmsSlideUp {
-          from { transform: translateY(50px); opacity: 0; }
+          from { transform: translateY(40px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
         }
         #lms-radar-floating-badge:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 14px 30px rgba(0,0,0,0.5), 0 0 0 1px #3b82f6;
+          background: #1e293b;
+          border-color: #475569;
         }
         .lms-badge-count {
-          background: #ef4444;
-          color: #fff;
-          font-weight: 700;
+          background: #2563eb;
+          color: #ffffff;
+          font-weight: 600;
           font-size: 11px;
-          padding: 2px 7px;
-          border-radius: 12px;
+          padding: 1px 7px;
+          border-radius: 10px;
         }
       </style>
-      <span style="font-size: 16px;">📡</span>
-      <span style="font-weight: 600;">LMS Deadlines</span>
+      <span style="font-weight: 600; letter-spacing: -0.2px;">Deadlines</span>
       <span class="lms-badge-count">${count}</span>
-      ${newItemsCount > 0 ? `<span style="font-size: 11px; color: #10b981; font-weight: 500;">(+${newItemsCount} new)</span>` : ''}
     `;
 
     host.addEventListener('click', () => {
@@ -938,21 +936,21 @@
 
     modal.innerHTML = `
       <div style="padding: 12px 16px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; background: #1e293b;">
-        <span style="font-weight: 700; font-size: 14px;">📡 Detected Deadlines (${sorted.length})</span>
-        <button id="lms-close-modal" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer;">✕</button>
+        <span style="font-weight: 600; font-size: 13px; letter-spacing: -0.2px;">Upcoming Deadlines (${sorted.length})</span>
+        <button id="lms-close-modal" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; padding: 2px 6px;">×</button>
       </div>
       <div style="padding: 10px; overflow-y: auto; flex: 1; max-height: 380px;">
-        ${sorted.length === 0 ? '<p style="font-size: 12px; color: #94a3b8; text-align: center; padding: 20px;">No upcoming deadlines found.</p>' : sorted.map(d => {
+        ${sorted.length === 0 ? '<p style="font-size: 12px; color: #94a3b8; text-align: center; padding: 24px;">No upcoming deadlines found.</p>' : sorted.map(d => {
           const ms = (d.timestamp || 0) - now;
-          const urgencyColor = ms < 86400000 ? '#ef4444' : ms < 259200000 ? '#f59e0b' : '#10b981';
+          const urgencyColor = ms < 86400000 ? '#ef4444' : ms < 259200000 ? '#f59e0b' : '#3b82f6';
           const dateStr = new Date(d.timestamp || d.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
           return `
             <div style="background: #1e293b; border-left: 3px solid ${urgencyColor}; border-radius: 6px; padding: 10px; margin-bottom: 8px;">
-              <div style="font-size: 11px; color: #3b82f6; font-weight: 600;">${esc(d.course || '')}</div>
-              <div style="font-size: 13px; font-weight: 600; margin: 3px 0;">
+              <div style="font-size: 11px; color: #60a5fa; font-weight: 500;">${esc(d.course || '')}</div>
+              <div style="font-size: 13px; font-weight: 500; margin: 3px 0;">
                 <a href="${esc(d.link || '#')}" target="_blank" style="color: #f1f5f9; text-decoration: none;">${esc(d.title)}</a>
               </div>
-              <div style="font-size: 11px; color: #94a3b8;">📅 ${dateStr}</div>
+              <div style="font-size: 11px; color: #94a3b8;">${dateStr}</div>
             </div>
           `;
         }).join('')}

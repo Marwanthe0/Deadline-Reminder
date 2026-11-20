@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    saveStatus.textContent = '✓ Saved!';
+    saveStatus.textContent = 'Saved';
     saveStatus.classList.add('visible');
     setTimeout(() => saveStatus.classList.remove('visible'), 2500);
   });
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await chrome.storage.local.set({ deadlines: merged });
         deadlineCount.textContent = merged.length;
 
-        saveStatus.textContent = `✓ Imported ${data.deadlines.length} deadline(s)`;
+        saveStatus.textContent = `Imported ${data.deadlines.length} items`;
         saveStatus.classList.add('visible');
         setTimeout(() => saveStatus.classList.remove('visible'), 3000);
       } else {
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     customTitleSelector.value = '';
     customDateSelector.value  = '';
 
-    saveStatus.textContent = '✓ All data cleared';
+    saveStatus.textContent = 'All data cleared';
     saveStatus.classList.add('visible');
     setTimeout(() => saveStatus.classList.remove('visible'), 2500);
   });

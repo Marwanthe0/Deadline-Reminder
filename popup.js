@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           item.submitted = !item.submitted;
           await chrome.storage.local.set({ deadlines: allDeadlines });
           renderDeadlines();
-          showToast(item.submitted ? 'Marked as Turned in ✓' : 'Marked as Pending');
+          showToast(item.submitted ? 'Marked complete' : 'Marked pending');
         }
       });
     });
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       : ms < 3 * DAY
       ? 'warning'
       : 'safe';
-    const countdownText = d.submitted ? '✓ TURNED IN' : isOverdue ? 'OVERDUE' : formatCountdown(ms);
+    const countdownText = d.submitted ? 'Submitted' : isOverdue ? 'Overdue' : formatCountdown(ms);
     const dateStr = formatDate(new Date(d.timestamp || d.dueDate));
     const gcalLink = CalendarUtils.createGoogleCalendarLink(
       d.title,
@@ -180,12 +180,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     return `
       <div class="deadline-card ${urgencyClass}"
-           style="animation-delay:${index * 40}ms">
+           style="animation-delay:${index * 30}ms">
         <div class="card-top">
           <div class="card-info">
-            <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 4px;">
+            <div class="card-header-line">
               ${d.course ? `<span class="course-badge">${esc(d.course)}</span>` : ''}
-              ${d.submitted ? `<span class="submitted-badge">✓ Submitted</span>` : ''}
+              ${d.submitted ? `<span class="submitted-badge">Submitted</span>` : ''}
             </div>
             <div class="card-title ${d.submitted ? 'strike' : ''}">
               ${d.link
@@ -193,45 +193,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                 : esc(d.title)}
             </div>
             <div class="card-meta">
-              <span class="due-date">📅 ${dateStr}</span>
+              <span class="due-date">${dateStr}</span>
               <span class="countdown ${urgencyClass}">${countdownText}</span>
-              <span class="platform-tag">${esc(d.platform || '')}</span>
+              ${d.platform ? `<span class="platform-tag">${esc(d.platform)}</span>` : ''}
             </div>
           </div>
           <div class="card-actions">
             <!-- Toggle Submitted/Done -->
-            <button class="btn-icon toggle-submit-btn" title="${d.submitted ? 'Mark as Not Done' : 'Mark as Done'}"
-                    data-key="${esc(key)}">
-              <span style="font-size: 13px;">${d.submitted ? '↩️' : '✅'}</span>
+            <button class="btn-icon toggle-submit-btn" title="${d.submitted ? 'Mark as incomplete' : 'Mark as complete'}"
+                    data-key="${esc(key)}" aria-label="Toggle completion">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${d.submitted ? '#10b981' : 'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
             </button>
             <!-- Google Calendar -->
             <a href="${gcalLink}" target="_blank" rel="noopener"
-               class="btn-icon" title="Add to Google Calendar">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               class="btn-icon" title="Add to Google Calendar" aria-label="Google Calendar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
                    stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                 <line x1="16" y1="2" x2="16" y2="6"/>
                 <line x1="8"  y1="2" x2="8"  y2="6"/>
                 <line x1="3"  y1="10" x2="21" y2="10"/>
-                <line x1="12" y1="14" x2="12" y2="18"/>
-                <line x1="10" y1="16" x2="14" y2="16"/>
               </svg>
             </a>
             <!-- Outlook Calendar -->
             <a href="${outlookLink}" target="_blank" rel="noopener"
-               class="btn-icon" title="Add to Outlook Calendar">
-              <span style="font-size: 12px; font-weight: 700; color: #60a5fa;">O</span>
+               class="btn-icon" title="Add to Outlook Calendar" aria-label="Outlook Calendar">
+              <span class="text-icon">O</span>
             </a>
             <!-- Notion Quick-Capture -->
             <a href="${notionLink}" target="_blank" rel="noopener"
-               class="btn-icon" title="Export to Notion">
-              <span style="font-size: 12px; font-weight: 700;">N</span>
+               class="btn-icon" title="Save to Notion" aria-label="Notion">
+              <span class="text-icon">N</span>
             </a>
             <!-- Download .ics -->
-            <button class="btn-icon ics-btn" title="Download .ics"
-                    data-deadline="${safeJSON}">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+            <button class="btn-icon ics-btn" title="Download .ics file"
+                    data-deadline="${safeJSON}" aria-label="Download ICS">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
                    stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -240,9 +240,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               </svg>
             </button>
             <!-- Delete -->
-            <button class="btn-icon delete-btn" title="Remove"
-                    data-key="${esc(key)}">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+            <button class="btn-icon delete-btn" title="Remove assignment"
+                    data-key="${esc(key)}" aria-label="Remove">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
                    stroke-linejoin="round">
                 <line x1="18" y1="6"  x2="6"  y2="18"/>
@@ -281,11 +281,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         await delay(600); // let content script write to storage
         await loadDeadlines();
-        showToast('Page scanned!');
+        showToast('Page scan complete');
       }
     } catch (err) {
       console.error('Scan failed:', err);
-      showToast('Scan failed — try on your LMS page');
+      showToast('Scan unavailable on this tab');
     }
     scanBtn.classList.remove('scanning');
   });
@@ -305,8 +305,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     const ics = CalendarUtils.generateMultiICS(future);
-    CalendarUtils.downloadFile('campus_deadlines.ics', ics, 'text/calendar');
-    showToast(`Exported ${future.length} deadline${future.length > 1 ? 's' : ''}!`);
+    CalendarUtils.downloadFile('academic_deadlines.ics', ics, 'text/calendar');
+    showToast(`Exported ${future.length} event${future.length > 1 ? 's' : ''}`);
   });
 
   // ─── Clear All ────────────────────────────────────────────

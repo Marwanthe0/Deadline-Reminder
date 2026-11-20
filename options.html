@@ -9,13 +9,13 @@
 <body>
   <div class="container">
     <header class="page-header">
-      <h1>⚙️ LMS Deadline Reminder — Settings</h1>
-      <p class="tagline">Customize notifications, domains, and advanced scraping rules.</p>
+      <h1>Settings</h1>
+      <p class="tagline">Configure notification thresholds, platform preferences, and scraper rules.</p>
     </header>
 
     <!-- ─── Notifications & Alerts ─── -->
     <section class="card">
-      <h2>🔔 Notifications & Alert Timing</h2>
+      <h2>Notifications & Reminders</h2>
       <label class="row">
         <span>Enable desktop notifications</span>
         <input type="checkbox" id="enableNotifications" checked>
@@ -25,7 +25,7 @@
         <input type="checkbox" id="soundAlerts" checked>
       </label>
       <div class="row" style="flex-direction: column; align-items: flex-start; gap: 6px;">
-        <span>Multi-stage reminder alerts (hours before deadline):</span>
+        <span>Reminder intervals (hours before deadline)</span>
         <p class="hint">Enter comma-separated hours (e.g. <code>48, 24, 2</code> for 2 days, 1 day, and 2 hours prior):</p>
         <input type="text" id="alertHours" placeholder="48, 24, 2" class="input-wide" style="width: 100%;">
       </div>
@@ -33,18 +33,18 @@
 
     <!-- ─── Zero-Click Calendar Sync ─── -->
     <section class="card">
-      <h2>📅 Calendar Auto-Sync</h2>
+      <h2>Calendar Synchronization</h2>
       <label class="row">
         <div>
-          <span>Enable zero-click background sync</span>
-          <p class="hint" style="margin-bottom: 0;">Automatically tracks and queues assignments for calendar integration as soon as they are detected.</p>
+          <span>Automatic background sync</span>
+          <p class="hint" style="margin-bottom: 0;">Automatically track detected assignments for calendar integration.</p>
         </div>
         <input type="checkbox" id="autoCalendarSync" checked>
       </label>
       <label class="row">
         <div>
-          <span>Hide submitted / turned-in assignments</span>
-          <p class="hint" style="margin-bottom: 0;">Automatically suppresses alerts and marks completed work as submitted.</p>
+          <span>Hide submitted assignments</span>
+          <p class="hint" style="margin-bottom: 0;">Suppress notifications for completed tasks and mark them as submitted.</p>
         </div>
         <input type="checkbox" id="hideSubmitted" checked>
       </label>
@@ -52,25 +52,23 @@
 
     <!-- ─── Custom Domains ─── -->
     <section class="card">
-      <h2>🌐 Custom Domains</h2>
+      <h2>Custom Portals</h2>
       <p class="hint">
-        Add your university portal domains so the content script auto-runs there.
-        One domain per line (e.g. <code>portal.myuniversity.edu</code>).
+        Add custom LMS or university hostnames to run the scraper on page load.
+        One hostname per line (e.g. <code>portal.university.edu</code>).
       </p>
       <textarea id="customDomains" rows="4"
-                placeholder="portal.myuniversity.edu&#10;lms.college.edu"></textarea>
+                placeholder="portal.university.edu&#10;lms.college.edu"></textarea>
       <p class="hint muted">
-        After saving, you'll need to reload the extension on
-        <code>chrome://extensions</code> for new host permissions to take effect.
+        Reload the extension at <code>chrome://extensions</code> after adding new domains.
       </p>
     </section>
 
     <!-- ─── Custom Selectors ─── -->
     <section class="card">
-      <h2>🎯 Custom CSS Selectors</h2>
+      <h2>Advanced DOM Selectors</h2>
       <p class="hint">
-        Advanced: provide CSS selectors the generic scraper will use on custom
-        portals. Leave blank to use the built-in heuristics.
+        Specify CSS selectors for non-standard university portals. Leave empty to use default heuristic detection.
       </p>
       <label class="row">
         <span>Title selector</span>
@@ -86,7 +84,7 @@
 
     <!-- ─── Data ─── -->
     <section class="card">
-      <h2>📊 Data Management</h2>
+      <h2>Data Storage</h2>
       <div class="row">
         <span>Stored deadlines</span>
         <strong id="deadlineCount">0</strong>
@@ -96,7 +94,7 @@
         <span id="lastScanInfo">—</span>
       </div>
       <div class="btn-row">
-        <button id="exportJson" class="btn">Export JSON Backup</button>
+        <button id="exportJson" class="btn">Export JSON</button>
         <button id="importJson" class="btn">Import JSON</button>
         <button id="clearAll" class="btn btn-danger">Clear All Data</button>
       </div>
@@ -106,7 +104,7 @@
     <!-- ─── Save Bar ─── -->
     <div class="save-bar">
       <span id="saveStatus"></span>
-      <button id="saveBtn" class="btn btn-primary">💾 Save Settings</button>
+      <button id="saveBtn" class="btn btn-primary">Save Changes</button>
     </div>
   </div>
 

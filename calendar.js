@@ -51,9 +51,8 @@ const CalendarUtils = {
 
   createNotionPageUrl(title, dateStr, url, course) {
     const text = encodeURIComponent(
-      `📌 ${title} (${course || 'Course'})\n📅 Due: ${dateStr}\n🔗 ${url || ''}`
+      `Course: ${course || 'General'}\nDue Date: ${dateStr}\nURL: ${url || ''}`
     );
-    // Uses Notion's official quick-capture web intent
     return `https://www.notion.so/?action=new&title=${encodeURIComponent(title)}&body=${text}`;
   },
 
