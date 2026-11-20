@@ -1,132 +1,100 @@
-# 📡 Campus Deadline Radar
+# LMS Deadline Reminder
 
-A lightweight Chrome extension that **auto-detects course deadlines** from your university LMS (Canvas, Moodle, Google Classroom, Blackboard, Brightspace) and lets you export them to **Google Calendar** or download **.ics files** — all without any backend server, database, or OAuth setup.
+A lightweight, client-side Chromium extension that detects assignment deadlines across university Learning Management Systems (Canvas, Moodle, Google Classroom, Blackboard, and Brightspace) and exports them directly to **Google Calendar** or standardized **iCalendar (.ics)** files.
 
-![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue?logo=googlechrome&logoColor=white)
-![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
+Built with Manifest V3, without any external server dependencies, database clusters, or complex OAuth handshakes. All data stays local in browser storage.
 
 ---
 
-## ✨ Features
+## Key Features
 
-| Feature | Description |
-|---------|-------------|
-| 🔍 **Auto-detection** | Content scripts automatically scrape deadlines when you visit supported LMS pages |
-| 📅 **Google Calendar** | One-click "Add to Calendar" via pre-filled URL — no API key needed |
-| 📥 **.ics Export** | Download individual or bulk `.ics` files for Apple Calendar, Outlook, or any calendar app |
-| 🔔 **Notifications** | Desktop alerts when a deadline is approaching (configurable hours) |
-| 🎨 **Urgency Colors** | 🔴 Red (<24h), 🟡 Yellow (<3 days), 🟢 Green (>3 days) |
-| 🏷️ **Badge Count** | Extension icon shows the number of upcoming deadlines this week |
-| 🔎 **Manual Scan** | Click the ⟳ button to scan any page — works on custom university portals |
-| ⚙️ **Custom Selectors** | Advanced users can define CSS selectors for unsupported portals |
-| 💾 **JSON Backup** | Export/import all data as JSON |
-
----
-
-## 🏫 Supported Platforms
-
-- **Canvas** (Instructure) — `*.instructure.com`
-- **Moodle** — `*.moodle.org`, `*.moodlecloud.com`
-- **Google Classroom** — `classroom.google.com`
-- **Blackboard** — `*.blackboard.com`
-- **Brightspace / D2L** — `*.brightspace.com`, `*.d2l.com`
-- **Generic** — Heuristic fallback that detects assignment tables & date patterns on any page
+- **Automated Scraping**: Detects and extracts assignments, due dates, course names, and direct links when navigating your university dashboard or assignment pages.
+- **Universal Calendar Export**:
+  - Direct pre-filled Google Calendar event generation.
+  - Multi-platform `.ics` file generation (RFC 5545 compatible) for Apple Calendar, Outlook, Thunderbird, and Notion.
+- **Urgency Visualization**: Prioritizes upcoming deliverables with color-coded status badges:
+  - 🔴 **Urgent**: Less than 24 hours remaining.
+  - 🟡 **Approaching**: Within 3 days.
+  - 🟢 **Safe**: Scheduled further out.
+- **Local Alerts & Badges**: Periodic checks trigger desktop notifications prior to impending cutoffs, with a live countdown badge displayed directly on the extension icon.
+- **Extensible Heuristics & Selectors**: Includes a resilient fallback parser for custom or self-hosted university portals, along with an options page to configure site-specific DOM selectors and custom domains.
+- **Privacy First**: Fully client-side. No user data, session cookies, or LMS credentials ever leave your machine.
 
 ---
 
-## 🚀 Installation (Developer Mode)
+## Supported Learning Platforms
 
-1. **Clone or download** this repository:
+| LMS | Auto-Detection Match Pattern | Extraction Target |
+| :--- | :--- | :--- |
+| **Canvas LMS** | `*.instructure.com` | Assignment tables, planner cards, syllabus schedule, calendar |
+| **Moodle** | `*.moodle.org`, `*.moodlecloud.com` + self-hosted | Timeline block, upcoming events, course activity modules |
+| **Google Classroom** | `classroom.google.com` | Coursework lists, student to-do views |
+| **Blackboard Learn / Ultra** | `*.blackboard.com` | Activity stream, course assignment lists |
+| **Brightspace / D2L** | `*.brightspace.com`, `*.d2l.com` | Assignment lists, upcoming work widgets |
+| **Custom Portals** | User-defined domains | Heuristic table/list date-parsing engine + configurable CSS selectors |
+
+---
+
+## Installation
+
+### Load Unpacked Extension (Developer Mode)
+
+1. Clone or download this repository:
    ```bash
-   git clone https://github.com/Marwanthe0/campus-deadline-radar.git
+   git clone https://github.com/Marwanthe0/LMS-Deadline-Reminder.git
    ```
-
-2. Open **Chrome** and navigate to `chrome://extensions`
-
-3. Enable **Developer mode** (toggle in the top-right corner)
-
-4. Click **"Load unpacked"** and select the project folder
-
-5. The 📡 extension icon appears in your toolbar — you're ready to go!
+2. Open Google Chrome (or any Chromium browser like Brave, Edge, or Arc).
+3. Navigate to `chrome://extensions`.
+4. Enable **Developer mode** via the toggle switch in the top-right corner.
+5. Click **Load unpacked** and select the root directory of this repository (`LMS-Deadline-Reminder`).
+6. Pin the extension to your browser toolbar for quick access.
 
 ---
 
-## 📖 Usage
+## Usage Workflow
 
-1. **Log into your university portal** (Canvas, Moodle, etc.) as you normally would
-2. Navigate to your **assignments/dashboard page**
-3. The extension **automatically extracts deadlines** and stores them locally
-4. Click the **📡 extension icon** to see your deadlines sorted by urgency
-5. Use the action buttons on each card:
-   - 📅 **Add to Google Calendar** — opens a pre-filled event
-   - ⬇️ **Download .ics** — imports into any calendar app
-   - ✕ **Remove** — delete a single deadline
-6. Use the **footer buttons** to export all deadlines or clear stored data
-
-### Manual Scan
-If your university uses a custom portal not auto-detected, click the **⟳ Scan** button in the popup to run the scraper on the current tab.
-
-### Settings
-Click the **⚙️ gear icon** to configure:
-- Notification timing (hours before deadline)
-- Custom university domains
-- Advanced CSS selectors for custom portals
-- Data export/import
+1. Log into your university portal as usual.
+2. Navigate to your course dashboard, upcoming tasks, or assignments overview.
+3. The extension content script runs automatically on recognized domains, extracting deadlines into `chrome.storage.local`.
+4. Click the extension toolbar icon:
+   - View your upcoming assignments sorted in chronological order.
+   - Click the **Google Calendar** icon on any task to add it immediately.
+   - Click the **.ics** icon to download a calendar file for individual events, or use **Export All (.ics)** for your full schedule.
+5. If you are on an unlisted university subdomain, click the **⟳ Scan** button inside the popup to force an active-tab extraction.
 
 ---
 
-## 🏗️ Project Structure
+## Configuration & Options
+
+Access the settings page by clicking the gear icon (**⚙**) in the popup:
+
+- **Notification Lead Time**: Configure how many hours in advance you receive desktop reminders (default: 24h).
+- **Custom Domains**: Add your institution's hostnames (e.g., `lms.university.edu`) to ensure scripts inject automatically.
+- **Custom CSS Selectors**: Specify custom CSS selectors for assignment titles and due dates on bespoke university portals.
+- **Data Management**: Export your entire stored deadline database to JSON or import from an existing backup.
+
+---
+
+## Architecture
 
 ```
-campus-deadline-radar/
-├── manifest.json       # Extension config (Manifest V3)
-├── background.js       # Service worker: alarms, badge, notifications
-├── content.js          # Content script: platform detection + scraping
-├── popup.html          # Popup UI layout
-├── popup.css           # Popup styles (dark theme, card-based)
-├── popup.js            # Popup logic: rendering, filters, actions
-├── calendar.js         # Calendar utilities: Google Calendar links, .ics generation
+LMS-Deadline-Reminder/
+├── manifest.json       # Manifest V3 configuration & permission declarations
+├── background.js       # Background service worker for alarms, notifications & icon badges
+├── content.js          # Platform adapters & heuristic DOM scrapers
+├── calendar.js         # RFC 5545 iCalendar serialization & Google Calendar URL encoder
+├── popup.html          # Extension popup interface
+├── popup.css           # Clean dark-mode stylesheet & responsive card layout
+├── popup.js            # Popup interaction, state management, and filtering logic
 ├── options.html        # Settings page layout
-├── options.css         # Settings page styles
-├── options.js          # Settings logic: save, export, import, clear
-├── icons/              # Extension icons (16, 32, 48, 128 px)
-├── .gitignore
-├── LICENSE
+├── options.css         # Options styling
+├── options.js          # Options persistence and JSON import/export handlers
+├── icons/              # Extension asset sizes (16, 32, 48, 128px)
 └── README.md
 ```
 
 ---
 
-## 🔧 Adding Your Own University Domain
+## License
 
-If your university portal isn't auto-detected:
-
-1. Click the ⚙️ icon → **Settings**
-2. Under **Custom Domains**, add your portal URL (e.g. `portal.myuni.edu`)
-3. Under **Custom CSS Selectors**, inspect your portal's HTML and enter:
-   - **Title selector**: CSS selector for assignment titles (e.g. `.hw-title a`)
-   - **Date selector**: CSS selector for due dates (e.g. `.due-date`)
-4. Click **Save Settings**
-5. Reload the extension on `chrome://extensions`
-
----
-
-## 🛣️ Roadmap
-
-- [ ] Chrome Web Store publishing
-- [ ] Outlook Calendar direct link support
-- [ ] Recurring deadline detection (e.g. weekly quizzes)
-- [ ] Multi-language date parsing
-- [ ] Dark/light theme toggle
-- [ ] Sync across devices via `chrome.storage.sync`
-
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE).
-
----
-
-Built with ❤️ by [Marwanthe0](https://github.com/Marwanthe0)
+Distributed under the [MIT License](LICENSE).

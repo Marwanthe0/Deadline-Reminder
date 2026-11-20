@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Campus Deadline Radar",
+  "name": "LMS Deadline Reminder",
   "version": "1.0.0",
-  "description": "Auto-detects course deadlines from Canvas, Moodle, Google Classroom, Blackboard & more. Export to Google Calendar or .ics file.",
+  "description": "Auto-detects course deadlines across university LMS platforms (Canvas, Moodle, Classroom, Blackboard, Brightspace) and exports them to Google Calendar or .ics files.",
   "permissions": [
     "storage",
     "alarms",
